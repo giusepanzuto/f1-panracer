@@ -14,6 +14,7 @@ import { COLLISION_DAMP } from '../config/tuning';
 import { Hud } from '../../ui/Hud';
 import { Speedometer } from '../../ui/Speedometer';
 import { StartOverlay } from '../../ui/StartOverlay';
+import { TouchControls } from '../../ui/TouchControls';
 
 type GameState = 'idle' | 'racing';
 
@@ -26,6 +27,7 @@ export class RaceScene {
   private readonly hud: Hud;
   private readonly speedometer: Speedometer;
   private readonly startOverlay: StartOverlay;
+  private readonly touchControls: TouchControls;
   private state: GameState = 'idle';
 
   constructor(engine: Engine) {
@@ -48,7 +50,8 @@ export class RaceScene {
     this.lapTiming = new LapTimingSystem(this.track.startPosition.x);
     this.hud = new Hud();
     this.speedometer = new Speedometer();
-    this.startOverlay = new StartOverlay();
+    this.startOverlay = new StartOverlay(() => this.input.virtualPress('Space'));
+    this.touchControls = new TouchControls(this.input);
 
     const camera = new FollowCamera(
       'camera',
@@ -93,6 +96,7 @@ export class RaceScene {
   }
 
   dispose(): void {
+    this.touchControls.dispose();
     this.startOverlay.dispose();
     this.speedometer.dispose();
     this.hud.dispose();

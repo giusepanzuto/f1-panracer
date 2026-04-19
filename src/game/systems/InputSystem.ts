@@ -31,6 +31,17 @@ export class InputSystem {
     return false;
   }
 
+  virtualPress(code: string): void {
+    if (!this.pressed.has(code)) {
+      this.justPressed.add(code);
+    }
+    this.pressed.add(code);
+  }
+
+  virtualRelease(code: string): void {
+    this.pressed.delete(code);
+  }
+
   read(): InputAxes {
     const up = this.pressed.has('ArrowUp') || this.pressed.has('KeyW');
     const down = this.pressed.has('ArrowDown') || this.pressed.has('KeyS');
