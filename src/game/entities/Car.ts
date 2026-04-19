@@ -31,9 +31,31 @@ export class Car {
       scene,
     );
     const mat = new StandardMaterial('car-mat', scene);
-    mat.diffuseColor = new Color3(0.9, 0.15, 0.2);
+    mat.diffuseColor = new Color3(0.92, 0.12, 0.16);
     mat.specularColor = Color3.Black();
     this.root.material = mat;
+
+    const wheelMat = new StandardMaterial('wheel-mat', scene);
+    wheelMat.diffuseColor = new Color3(0.08, 0.08, 0.08);
+    wheelMat.specularColor = Color3.Black();
+
+    const wheelOffsets = [
+      new Vector3(-0.55, -0.05, 0.8),
+      new Vector3(0.55, -0.05, 0.8),
+      new Vector3(-0.55, -0.05, -0.8),
+      new Vector3(0.55, -0.05, -0.8),
+    ];
+    for (const offset of wheelOffsets) {
+      const wheel = MeshBuilder.CreateCylinder(
+        'wheel',
+        { height: 0.2, diameter: 0.4 },
+        scene,
+      );
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.copyFrom(offset);
+      wheel.material = wheelMat;
+      wheel.parent = this.root;
+    }
 
     this.syncTransform();
   }

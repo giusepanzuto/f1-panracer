@@ -1,4 +1,5 @@
 import {
+  Color3,
   Engine,
   FollowCamera,
   HemisphericLight,
@@ -27,9 +28,16 @@ export class RaceScene {
 
   constructor(engine: Engine) {
     this.scene = new Scene(engine);
-    this.scene.clearColor.set(0.05, 0.07, 0.12, 1);
+    this.scene.clearColor.set(0.52, 0.75, 0.92, 1);
 
-    new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
+    const light = new HemisphericLight(
+      'light',
+      new Vector3(0, 1, 0),
+      this.scene,
+    );
+    light.diffuse = new Color3(1, 0.97, 0.9);
+    light.groundColor = new Color3(0.45, 0.5, 0.45);
+    light.intensity = 1;
 
     this.track = new Track(this.scene);
     this.car = new Car(this.scene);

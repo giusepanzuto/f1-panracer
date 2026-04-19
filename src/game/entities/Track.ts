@@ -32,8 +32,19 @@ export class Track {
       TRACK_CURVE_RADIUS + halfWidth,
     );
 
+    const grassMat = new StandardMaterial('grass-mat', scene);
+    grassMat.diffuseColor = new Color3(0.33, 0.58, 0.28);
+    grassMat.specularColor = Color3.Black();
+    const grass = MeshBuilder.CreateGround(
+      'grass',
+      { width: 240, height: 240 },
+      scene,
+    );
+    grass.position.y = -0.01;
+    grass.material = grassMat;
+
     const asphaltMat = new StandardMaterial('asphalt-mat', scene);
-    asphaltMat.diffuseColor = new Color3(0.18, 0.2, 0.24);
+    asphaltMat.diffuseColor = new Color3(0.14, 0.15, 0.18);
     asphaltMat.specularColor = Color3.Black();
 
     const asphalt = MeshBuilder.CreateRibbon(
@@ -69,6 +80,17 @@ export class Track {
       scene,
     );
     outerWall.material = wallMat;
+
+    const finishLineMat = new StandardMaterial('finish-line-mat', scene);
+    finishLineMat.diffuseColor = new Color3(0.95, 0.95, 0.95);
+    finishLineMat.specularColor = Color3.Black();
+    const finishLine = MeshBuilder.CreateBox(
+      'finish-line',
+      { width: 1, height: 0.02, depth: TRACK_WIDTH },
+      scene,
+    );
+    finishLine.position.set(-TRACK_STRAIGHT / 2, 0.02, TRACK_CURVE_RADIUS);
+    finishLine.material = finishLineMat;
 
     this.startPosition = new Vector3(
       -TRACK_STRAIGHT / 2,
