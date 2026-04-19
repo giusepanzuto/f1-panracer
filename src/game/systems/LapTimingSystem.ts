@@ -22,6 +22,14 @@ export class LapTimingSystem {
     return performance.now() - this.lapStartMs;
   }
 
+  resetRun(startX: number): void {
+    this.prevX = startX;
+    this.lapStartMs = performance.now();
+    this.hasCheckpoint = false;
+    this.lapCount = 0;
+    this.lastLapMs = null;
+  }
+
   update(pos: Vector3): void {
     if (pos.z < CHECKPOINT_Z) this.hasCheckpoint = true;
 

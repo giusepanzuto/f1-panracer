@@ -5,6 +5,7 @@ export type InputAxes = {
 
 export class InputSystem {
   private readonly pressed = new Set<string>();
+  private readonly justPressed = new Set<string>();
 
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
@@ -12,12 +13,23 @@ export class InputSystem {
   }
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
+    if (!this.pressed.has(e.code)) {
+      this.justPressed.add(e.code);
+    }
     this.pressed.add(e.code);
   };
 
   private readonly onKeyUp = (e: KeyboardEvent): void => {
     this.pressed.delete(e.code);
   };
+
+  consumePress(code: string): boolean {
+    if (this.justPressed.has(code)) {
+      this.justPressed.delete(code);
+      return true;
+    }
+    return false;
+  }
 
   read(): InputAxes {
     const up = this.pressed.has('ArrowUp') || this.pressed.has('KeyW');

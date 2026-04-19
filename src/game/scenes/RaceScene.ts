@@ -11,6 +11,9 @@ import { InputSystem } from '../systems/InputSystem';
 import { LapTimingSystem } from '../systems/LapTimingSystem';
 import { COLLISION_DAMP } from '../config/tuning';
 import { Hud } from '../../ui/Hud';
+import { StartOverlay } from '../../ui/StartOverlay';
+
+type GameState = 'idle' | 'racing';
 
 export class RaceScene {
   readonly scene: Scene;
@@ -19,6 +22,8 @@ export class RaceScene {
   private readonly input: InputSystem;
   private readonly lapTiming: LapTimingSystem;
   private readonly hud: Hud;
+  private readonly startOverlay: StartOverlay;
+  private state: GameState = 'idle';
 
   constructor(engine: Engine) {
     this.scene = new Scene(engine);
@@ -28,11 +33,11 @@ export class RaceScene {
 
     this.track = new Track(this.scene);
     this.car = new Car(this.scene);
-    this.car.position.copyFrom(this.track.startPosition);
-    this.car.heading = this.track.startHeading;
+    this.car.reset(this.track.startPosition, this.track.startHeading);
     this.input = new InputSystem();
     this.lapTiming = new LapTimingSystem(this.track.startPosition.x);
     this.hud = new Hud();
+    this.startOverlay = new StartOverlay();
 
     const camera = new FollowCamera(
       'camera',
@@ -48,15 +53,22 @@ export class RaceScene {
 
     this.scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000;
-      this.car.update(dt, this.input.read());
-      if (this.track.clampToBounds(this.car.position)) {
-        this.car.dampSpeed(COLLISION_DAMP);
-        this.car.root.position.copyFrom(this.car.position);
+
+      if (this.state === 'idle') {
+        if (this.input.consumePress('Space')) this.startRace();
+      } else {
+        if (this.input.consumePress('KeyR')) this.resetRun();
+        this.car.update(dt, this.input.read());
+        if (this.track.clampToBounds(this.car.position)) {
+          this.car.dampSpeed(COLLISION_DAMP);
+          this.car.root.position.copyFrom(this.car.position);
+        }
+        this.lapTiming.update(this.car.position);
       }
-      this.lapTiming.update(this.car.position);
+
       this.hud.update({
         lap: this.lapTiming.lapCount + 1,
-        currentMs: this.lapTiming.currentLapMs,
+        currentMs: this.state === 'racing' ? this.lapTiming.currentLapMs : 0,
         bestMs: this.lapTiming.bestLapMs,
       });
     });
@@ -67,8 +79,20 @@ export class RaceScene {
   }
 
   dispose(): void {
+    this.startOverlay.dispose();
     this.hud.dispose();
     this.input.dispose();
     this.scene.dispose();
+  }
+
+  private startRace(): void {
+    this.resetRun();
+    this.startOverlay.hide();
+    this.state = 'racing';
+  }
+
+  private resetRun(): void {
+    this.car.reset(this.track.startPosition, this.track.startHeading);
+    this.lapTiming.resetRun(this.track.startPosition.x);
   }
 }

@@ -42,6 +42,13 @@ export class Car {
     this.speed *= factor;
   }
 
+  reset(pos: Vector3, heading: number): void {
+    this.position.copyFrom(pos);
+    this.heading = heading;
+    this.speed = 0;
+    this.syncTransform();
+  }
+
   update(dt: number, input: InputAxes): void {
     this.speed = this.integrateSpeed(dt, input.throttle);
 
