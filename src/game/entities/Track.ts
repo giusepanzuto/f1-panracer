@@ -5,6 +5,7 @@ import {
   StandardMaterial,
   Vector3,
 } from '@babylonjs/core';
+import type { Mesh } from '@babylonjs/core';
 import {
   COLLISION_RADIUS,
   TRACK_WIDTH,
@@ -27,11 +28,14 @@ export class Track {
   readonly startHeading: number;
   readonly finishLine: Segment2D;
   readonly checkpointLine: Segment2D;
+  readonly centerline: Vector3[];
 
-  private readonly centerline: Vector3[];
+  private readonly meshes: Mesh[] = [];
 
-  constructor(scene: Scene) {
-    const { center, checkpointIndex } = buildMonzaCenterline();
+  constructor(scene: Scene, centerline?: Vector3[]) {
+    const center = centerline
+      ? normalizeOrientation(centerline)
+      : buildMonzaCenterline();
     this.centerline = center;
 
     const halfWidth = TRACK_WIDTH / 2;
@@ -48,6 +52,7 @@ export class Track {
     );
     grass.position.y = -0.01;
     grass.material = grassMat;
+    this.meshes.push(grass);
 
     const asphaltMat = new StandardMaterial('asphalt-mat', scene);
     asphaltMat.diffuseColor = new Color3(0.14, 0.15, 0.18);
@@ -63,6 +68,7 @@ export class Track {
       scene,
     );
     asphalt.material = asphaltMat;
+    this.meshes.push(asphalt);
 
     const wallMat = new StandardMaterial('wall-mat', scene);
     wallMat.diffuseColor = new Color3(0.95, 0.75, 0.2);
@@ -79,6 +85,7 @@ export class Track {
       scene,
     );
     innerWall.material = wallMat;
+    this.meshes.push(innerWall);
 
     const outerWall = MeshBuilder.CreateTube(
       'outer-wall',
@@ -86,13 +93,19 @@ export class Track {
       scene,
     );
     outerWall.material = wallMat;
+    this.meshes.push(outerWall);
 
-    this.startHeading = Math.PI / 2;
+    const startTangent = tangentAt(center, 0);
+    this.startHeading = Math.atan2(startTangent.x, startTangent.z);
     this.startPosition = new Vector3(center[0].x, 0.25, center[0].z);
 
     this.finishLine = lineAcross(center[0], this.startHeading, halfWidth);
+    const checkpointIndex = Math.floor(center.length / 2);
     const checkpointTangent = tangentAt(center, checkpointIndex);
-    const checkpointHeading = Math.atan2(checkpointTangent.x, checkpointTangent.z);
+    const checkpointHeading = Math.atan2(
+      checkpointTangent.x,
+      checkpointTangent.z,
+    );
     this.checkpointLine = lineAcross(
       center[checkpointIndex],
       checkpointHeading,
@@ -110,6 +123,14 @@ export class Track {
     finishBox.position.set(center[0].x, 0.02, center[0].z);
     finishBox.rotation.y = this.startHeading - Math.PI / 2;
     finishBox.material = finishLineMat;
+    this.meshes.push(finishBox);
+  }
+
+  dispose(): void {
+    for (const mesh of this.meshes) {
+      mesh.dispose();
+    }
+    this.meshes.length = 0;
   }
 
   clampToBounds(pos: Vector3): boolean {
@@ -162,6 +183,24 @@ export class Track {
   }
 }
 
+function signedAreaXZ(points: Vector3[]): number {
+  let sum = 0;
+  const n = points.length;
+  for (let i = 0; i < n; i++) {
+    const p = points[i];
+    const q = points[(i + 1) % n];
+    sum += p.x * q.z - q.x * p.z;
+  }
+  return sum / 2;
+}
+
+function normalizeOrientation(points: Vector3[]): Vector3[] {
+  if (signedAreaXZ(points) > 0) {
+    return [...points].reverse();
+  }
+  return points;
+}
+
 function lineAcross(
   center: Vector3,
   heading: number,
@@ -183,7 +222,7 @@ function tangentAt(path: Vector3[], index: number): Vector3 {
   const next = path[(index + 1) % n];
   const tx = next.x - prev.x;
   const tz = next.z - prev.z;
-  const len = Math.hypot(tx, tz);
+  const len = Math.hypot(tx, tz) || 1;
   return new Vector3(tx / len, 0, tz / len);
 }
 
@@ -255,16 +294,13 @@ function arc(
   return { pos: new Vector3(x, 0, z), heading: h };
 }
 
-function buildMonzaCenterline(): {
-  center: Vector3[];
-  checkpointIndex: number;
-} {
+function buildMonzaCenterline(): Vector3[] {
   const center: Vector3[] = [];
   const start = new Vector3(-150, 0, -60);
   center.push(start);
   let cur: Cursor = { pos: start.clone(), heading: Math.PI / 2 };
 
-  cur = straight(center, cur, 110, 12);
+  cur = straight(center, cur, 70, 8);
 
   cur = arc(center, cur, 0.55, 12);
   cur = straight(center, cur, 6, 2);
@@ -275,8 +311,6 @@ function buildMonzaCenterline(): {
   cur = arc(center, cur, 2.3, 48);
 
   cur = straight(center, cur, 30, 5);
-
-  const checkpointIndex = center.length - 1;
 
   cur = arc(center, cur, -0.5, 10);
   cur = straight(center, cur, 8, 2);
@@ -290,15 +324,15 @@ function buildMonzaCenterline(): {
 
   cur = arc(center, cur, 0.5, 22);
 
-  cur = straight(center, cur, 55, 8);
+  cur = straight(center, cur, 30, 4);
 
   cur = arc(center, cur, -0.6, 10);
   cur = arc(center, cur, 1.2, 10);
   cur = arc(center, cur, -0.6, 10);
 
-  cur = straight(center, cur, 62, 8);
+  cur = straight(center, cur, 47, 6);
 
-  cur = arc(center, cur, 2.78, 50);
+  cur = arc(center, cur, 2.78, 58);
 
   const dx = start.x - cur.pos.x;
   const dz = start.z - cur.pos.z;
@@ -313,5 +347,5 @@ function buildMonzaCenterline(): {
     }
   }
 
-  return { center, checkpointIndex };
+  return center;
 }

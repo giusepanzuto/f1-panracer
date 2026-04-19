@@ -12,22 +12,26 @@ import { InputSystem } from '../systems/InputSystem';
 import { LapTimingSystem } from '../systems/LapTimingSystem';
 import { COLLISION_DAMP } from '../config/tuning';
 import { Hud } from '../../ui/Hud';
+import { Minimap } from '../../ui/Minimap';
 import { Speedometer } from '../../ui/Speedometer';
 import { StartOverlay } from '../../ui/StartOverlay';
 import { TouchControls } from '../../ui/TouchControls';
+import { TrackDesigner } from '../../ui/TrackDesigner';
 
 type GameState = 'idle' | 'racing';
 
 export class RaceScene {
   readonly scene: Scene;
   private readonly car: Car;
-  private readonly track: Track;
   private readonly input: InputSystem;
-  private readonly lapTiming: LapTimingSystem;
   private readonly hud: Hud;
   private readonly speedometer: Speedometer;
   private readonly startOverlay: StartOverlay;
   private readonly touchControls: TouchControls;
+  private readonly designer: TrackDesigner;
+  private track: Track;
+  private lapTiming: LapTimingSystem;
+  private minimap: Minimap;
   private state: GameState = 'idle';
 
   constructor(engine: Engine) {
@@ -53,8 +57,13 @@ export class RaceScene {
       this.track.checkpointLine,
     );
     this.hud = new Hud();
+    this.minimap = new Minimap(this.track.centerline);
     this.speedometer = new Speedometer();
-    this.startOverlay = new StartOverlay(() => this.input.virtualPress('Space'));
+    this.designer = new TrackDesigner();
+    this.startOverlay = new StartOverlay(
+      () => this.input.virtualPress('Space'),
+      () => void this.openDesigner(),
+    );
     this.touchControls = new TouchControls(this.input);
 
     const camera = new FollowCamera(
@@ -63,11 +72,12 @@ export class RaceScene {
       this.scene,
       this.car.root,
     );
-    camera.radius = 8;
-    camera.heightOffset = 3;
+    camera.radius = 6;
+    camera.heightOffset = 2;
     camera.rotationOffset = 180;
-    camera.cameraAcceleration = 0.05;
-    camera.maxCameraSpeed = 20;
+    camera.cameraAcceleration = 0.1;
+    camera.maxCameraSpeed = 30;
+    camera.fov = 1.2;
 
     this.scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000;
@@ -92,6 +102,7 @@ export class RaceScene {
       this.speedometer.update(
         this.state === 'racing' ? this.car.speedKmh : 0,
       );
+      this.minimap.update(this.car.position, this.car.heading);
     });
   }
 
@@ -100,9 +111,11 @@ export class RaceScene {
   }
 
   dispose(): void {
+    this.designer.dispose();
     this.touchControls.dispose();
     this.startOverlay.dispose();
     this.speedometer.dispose();
+    this.minimap.dispose();
     this.hud.dispose();
     this.input.dispose();
     this.scene.dispose();
@@ -117,5 +130,26 @@ export class RaceScene {
   private resetRun(): void {
     this.car.reset(this.track.startPosition, this.track.startHeading);
     this.lapTiming.resetRun(this.track.startPosition);
+  }
+
+  private async openDesigner(): Promise<void> {
+    const centerline = await this.designer.open();
+    if (centerline) {
+      this.rebuildTrack(centerline);
+    }
+  }
+
+  private rebuildTrack(centerline: Vector3[]): void {
+    this.track.dispose();
+    this.minimap.dispose();
+
+    this.track = new Track(this.scene, centerline);
+    this.lapTiming = new LapTimingSystem(
+      this.track.startPosition,
+      this.track.finishLine,
+      this.track.checkpointLine,
+    );
+    this.minimap = new Minimap(this.track.centerline);
+    this.car.reset(this.track.startPosition, this.track.startHeading);
   }
 }
