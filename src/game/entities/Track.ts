@@ -6,6 +6,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import {
+  COLLISION_RADIUS,
   TRACK_CURVE_RADIUS,
   TRACK_STRAIGHT,
   TRACK_WIDTH,
@@ -75,6 +76,45 @@ export class Track {
       TRACK_CURVE_RADIUS,
     );
     this.startHeading = Math.PI / 2;
+  }
+
+  clampToBounds(pos: Vector3): boolean {
+    const halfStraight = TRACK_STRAIGHT / 2;
+    const halfWidth = TRACK_WIDTH / 2;
+    const innerR = TRACK_CURVE_RADIUS - halfWidth + COLLISION_RADIUS;
+    const outerR = TRACK_CURVE_RADIUS + halfWidth - COLLISION_RADIUS;
+
+    if (pos.x > halfStraight || pos.x < -halfStraight) {
+      const centerX = pos.x > halfStraight ? halfStraight : -halfStraight;
+      const dx = pos.x - centerX;
+      const dz = pos.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < innerR) {
+        const k = innerR / Math.max(dist, 1e-6);
+        pos.x = centerX + dx * k;
+        pos.z = dz * k;
+        return true;
+      }
+      if (dist > outerR) {
+        const k = outerR / dist;
+        pos.x = centerX + dx * k;
+        pos.z = dz * k;
+        return true;
+      }
+      return false;
+    }
+
+    const signZ = pos.z >= 0 ? 1 : -1;
+    const absZ = Math.abs(pos.z);
+    if (absZ < innerR) {
+      pos.z = signZ * innerR;
+      return true;
+    }
+    if (absZ > outerR) {
+      pos.z = signZ * outerR;
+      return true;
+    }
+    return false;
   }
 }
 

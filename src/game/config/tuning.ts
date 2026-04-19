@@ -9,3 +9,6 @@ export const TRACK_STRAIGHT = 50;
 export const TRACK_CURVE_RADIUS = 20;
 export const TRACK_WIDTH = 8;
 export const WALL_HEIGHT = 0.5;
+
+export const COLLISION_RADIUS = 0.7;
+export const COLLISION_DAMP = 0.92;

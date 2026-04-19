@@ -38,6 +38,10 @@ export class Car {
     this.syncTransform();
   }
 
+  dampSpeed(factor: number): void {
+    this.speed *= factor;
+  }
+
   update(dt: number, input: InputAxes): void {
     this.speed = this.integrateSpeed(dt, input.throttle);
 

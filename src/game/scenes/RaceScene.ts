@@ -8,10 +8,12 @@ import {
 import { Car } from '../entities/Car';
 import { Track } from '../entities/Track';
 import { InputSystem } from '../systems/InputSystem';
+import { COLLISION_DAMP } from '../config/tuning';
 
 export class RaceScene {
   readonly scene: Scene;
   private readonly car: Car;
+  private readonly track: Track;
   private readonly input: InputSystem;
 
   constructor(engine: Engine) {
@@ -20,10 +22,10 @@ export class RaceScene {
 
     new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
 
-    const track = new Track(this.scene);
+    this.track = new Track(this.scene);
     this.car = new Car(this.scene);
-    this.car.position.copyFrom(track.startPosition);
-    this.car.heading = track.startHeading;
+    this.car.position.copyFrom(this.track.startPosition);
+    this.car.heading = this.track.startHeading;
     this.input = new InputSystem();
 
     const camera = new FollowCamera(
@@ -41,6 +43,10 @@ export class RaceScene {
     this.scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000;
       this.car.update(dt, this.input.read());
+      if (this.track.clampToBounds(this.car.position)) {
+        this.car.dampSpeed(COLLISION_DAMP);
+        this.car.root.position.copyFrom(this.car.position);
+      }
     });
   }
 
