@@ -13,10 +13,10 @@ export class Car {
   readonly position = new Vector3(0, 0.25, 0);
   heading = 0;
 
-  private readonly mesh: Mesh;
+  readonly root: Mesh;
 
   constructor(scene: Scene) {
-    this.mesh = MeshBuilder.CreateBox(
+    this.root = MeshBuilder.CreateBox(
       'car',
       { width: 1, height: 0.5, depth: 2 },
       scene,
@@ -24,7 +24,7 @@ export class Car {
     const mat = new StandardMaterial('car-mat', scene);
     mat.diffuseColor = new Color3(0.9, 0.15, 0.2);
     mat.specularColor = Color3.Black();
-    this.mesh.material = mat;
+    this.root.material = mat;
 
     this.syncTransform();
   }
@@ -42,7 +42,7 @@ export class Car {
   }
 
   private syncTransform(): void {
-    this.mesh.position.copyFrom(this.position);
-    this.mesh.rotation.y = this.heading;
+    this.root.position.copyFrom(this.position);
+    this.root.rotation.y = this.heading;
   }
 }

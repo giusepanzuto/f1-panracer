@@ -7,7 +7,7 @@ export class Game {
 
   constructor(canvas: HTMLCanvasElement) {
     this.engine = new Engine(canvas, true, { stencil: true });
-    this.race = new RaceScene(this.engine, canvas);
+    this.race = new RaceScene(this.engine);
 
     window.addEventListener('resize', () => this.engine.resize());
   }

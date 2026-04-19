@@ -1,6 +1,6 @@
 import {
-  ArcRotateCamera,
   Engine,
+  FollowCamera,
   HemisphericLight,
   Scene,
   Vector3,
@@ -14,25 +14,27 @@ export class RaceScene {
   private readonly car: Car;
   private readonly input: InputSystem;
 
-  constructor(engine: Engine, canvas: HTMLCanvasElement) {
+  constructor(engine: Engine) {
     this.scene = new Scene(engine);
     this.scene.clearColor.set(0.05, 0.07, 0.12, 1);
-
-    const camera = new ArcRotateCamera(
-      'camera',
-      -Math.PI / 2,
-      Math.PI / 3,
-      28,
-      Vector3.Zero(),
-      this.scene,
-    );
-    camera.attachControl(canvas, true);
 
     new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
 
     new Track(this.scene);
     this.car = new Car(this.scene);
     this.input = new InputSystem();
+
+    const camera = new FollowCamera(
+      'camera',
+      new Vector3(0, 5, -8),
+      this.scene,
+      this.car.root,
+    );
+    camera.radius = 8;
+    camera.heightOffset = 3;
+    camera.rotationOffset = 180;
+    camera.cameraAcceleration = 0.05;
+    camera.maxCameraSpeed = 20;
 
     this.scene.onBeforeRenderObservable.add(() => {
       const dt = engine.getDeltaTime() / 1000;
