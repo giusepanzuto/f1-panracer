@@ -20,8 +20,10 @@ export class RaceScene {
 
     new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
 
-    new Track(this.scene);
+    const track = new Track(this.scene);
     this.car = new Car(this.scene);
+    this.car.position.copyFrom(track.startPosition);
+    this.car.heading = track.startHeading;
     this.input = new InputSystem();
 
     const camera = new FollowCamera(

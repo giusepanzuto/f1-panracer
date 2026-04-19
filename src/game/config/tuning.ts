@@ -5,6 +5,7 @@ export const BRAKE_UPS2 = 20;
 export const FRICTION_UPS2 = 4;
 export const MAX_TURN_RADS = 2.2;
 
-export const TRACK_SIZE = 40;
+export const TRACK_STRAIGHT = 50;
+export const TRACK_CURVE_RADIUS = 20;
+export const TRACK_WIDTH = 8;
 export const WALL_HEIGHT = 0.5;
-export const WALL_THICKNESS = 0.5;
