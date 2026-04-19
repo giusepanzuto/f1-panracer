@@ -43,10 +43,5 @@ export class LapTimingSystem {
     this.lapCount++;
     this.lapStartMs = now;
     this.hasCheckpoint = false;
-
-    const best = this.bestLapMs;
-    console.log(
-      `giro ${this.lapCount}: ${(lapMs / 1000).toFixed(3)}s (best: ${(best / 1000).toFixed(3)}s)`,
-    );
   }
 }

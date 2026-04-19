@@ -10,6 +10,7 @@ import { Track } from '../entities/Track';
 import { InputSystem } from '../systems/InputSystem';
 import { LapTimingSystem } from '../systems/LapTimingSystem';
 import { COLLISION_DAMP } from '../config/tuning';
+import { Hud } from '../../ui/Hud';
 
 export class RaceScene {
   readonly scene: Scene;
@@ -17,6 +18,7 @@ export class RaceScene {
   private readonly track: Track;
   private readonly input: InputSystem;
   private readonly lapTiming: LapTimingSystem;
+  private readonly hud: Hud;
 
   constructor(engine: Engine) {
     this.scene = new Scene(engine);
@@ -30,6 +32,7 @@ export class RaceScene {
     this.car.heading = this.track.startHeading;
     this.input = new InputSystem();
     this.lapTiming = new LapTimingSystem(this.track.startPosition.x);
+    this.hud = new Hud();
 
     const camera = new FollowCamera(
       'camera',
@@ -51,6 +54,11 @@ export class RaceScene {
         this.car.root.position.copyFrom(this.car.position);
       }
       this.lapTiming.update(this.car.position);
+      this.hud.update({
+        lap: this.lapTiming.lapCount + 1,
+        currentMs: this.lapTiming.currentLapMs,
+        bestMs: this.lapTiming.bestLapMs,
+      });
     });
   }
 
@@ -59,6 +67,7 @@ export class RaceScene {
   }
 
   dispose(): void {
+    this.hud.dispose();
     this.input.dispose();
     this.scene.dispose();
   }

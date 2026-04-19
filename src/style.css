@@ -15,3 +15,34 @@ body {
   touch-action: none;
   outline: none;
 }
+
+.hud {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 18px;
+  line-height: 1.6;
+  border-radius: 8px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hud-row {
+  display: flex;
+  gap: 10px;
+}
+
+.hud-label {
+  color: rgba(255, 255, 255, 0.55);
+  min-width: 58px;
+  letter-spacing: 0.08em;
+}
+
+.hud-value {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
