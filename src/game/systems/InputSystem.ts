@@ -6,6 +6,8 @@ export type InputAxes = {
 export class InputSystem {
   private readonly pressed = new Set<string>();
   private readonly justPressed = new Set<string>();
+  private analogSteer = 0;
+  private analogSteerActive = false;
 
   constructor() {
     window.addEventListener('keydown', this.onKeyDown);
@@ -47,10 +49,24 @@ export class InputSystem {
     const down = this.pressed.has('ArrowDown') || this.pressed.has('KeyS');
     const left = this.pressed.has('ArrowLeft') || this.pressed.has('KeyA');
     const right = this.pressed.has('ArrowRight') || this.pressed.has('KeyD');
+    const digitalSteer = (right ? 1 : 0) - (left ? 1 : 0);
+    const steer = this.analogSteerActive
+      ? Math.max(-1, Math.min(1, digitalSteer + this.analogSteer))
+      : digitalSteer;
     return {
       throttle: (up ? 1 : 0) - (down ? 1 : 0),
-      steer: (right ? 1 : 0) - (left ? 1 : 0),
+      steer,
     };
+  }
+
+  setAnalogSteer(value: number): void {
+    this.analogSteer = Math.max(-1, Math.min(1, value));
+    this.analogSteerActive = true;
+  }
+
+  clearAnalogSteer(): void {
+    this.analogSteer = 0;
+    this.analogSteerActive = false;
   }
 
   dispose(): void {

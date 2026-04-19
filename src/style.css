@@ -187,3 +187,14 @@ body {
   font-size: 22px;
   pointer-events: auto;
 }
+
+.touch-tilt {
+  position: absolute;
+  top: 86px;
+  right: 24px;
+  width: 54px;
+  height: 54px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  pointer-events: auto;
+}
