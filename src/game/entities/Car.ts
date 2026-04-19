@@ -6,7 +6,14 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import type { Mesh } from '@babylonjs/core';
-import { MOVE_SPEED_UPS, TURN_SPEED_RADS } from '../config/tuning';
+import {
+  ACCEL_UPS2,
+  BRAKE_UPS2,
+  FRICTION_UPS2,
+  MAX_REVERSE_UPS,
+  MAX_SPEED_UPS,
+  MAX_TURN_RADS,
+} from '../config/tuning';
 import type { InputAxes } from '../systems/InputSystem';
 
 export class Car {
@@ -14,6 +21,8 @@ export class Car {
   heading = 0;
 
   readonly root: Mesh;
+
+  private speed = 0;
 
   constructor(scene: Scene) {
     this.root = MeshBuilder.CreateBox(
@@ -30,15 +39,31 @@ export class Car {
   }
 
   update(dt: number, input: InputAxes): void {
-    this.heading += input.steer * TURN_SPEED_RADS * dt;
+    this.speed = this.integrateSpeed(dt, input.throttle);
+
+    const speedRatio = this.speed / MAX_SPEED_UPS;
+    this.heading += input.steer * MAX_TURN_RADS * speedRatio * dt;
 
     const forwardX = Math.sin(this.heading);
     const forwardZ = Math.cos(this.heading);
-    const step = input.throttle * MOVE_SPEED_UPS * dt;
-    this.position.x += forwardX * step;
-    this.position.z += forwardZ * step;
+    this.position.x += forwardX * this.speed * dt;
+    this.position.z += forwardZ * this.speed * dt;
 
     this.syncTransform();
+  }
+
+  private integrateSpeed(dt: number, throttle: number): number {
+    let next = this.speed;
+    if (throttle > 0) {
+      next += ACCEL_UPS2 * throttle * dt;
+    } else if (throttle < 0) {
+      next += (this.speed > 0 ? BRAKE_UPS2 : ACCEL_UPS2) * throttle * dt;
+    } else {
+      const drag = FRICTION_UPS2 * dt;
+      if (Math.abs(this.speed) <= drag) next = 0;
+      else next -= Math.sign(this.speed) * drag;
+    }
+    return Math.max(-MAX_REVERSE_UPS, Math.min(MAX_SPEED_UPS, next));
   }
 
   private syncTransform(): void {
