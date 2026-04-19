@@ -296,9 +296,9 @@ function buildMonzaCenterline(): {
   cur = arc(center, cur, 1.2, 10);
   cur = arc(center, cur, -0.6, 10);
 
-  cur = straight(center, cur, 40, 6);
+  cur = straight(center, cur, 62, 8);
 
-  cur = arc(center, cur, 2.78, 42);
+  cur = arc(center, cur, 2.78, 50);
 
   const dx = start.x - cur.pos.x;
   const dz = start.z - cur.pos.z;
