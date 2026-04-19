@@ -47,7 +47,11 @@ export class RaceScene {
     this.car = new Car(this.scene);
     this.car.reset(this.track.startPosition, this.track.startHeading);
     this.input = new InputSystem();
-    this.lapTiming = new LapTimingSystem(this.track.startPosition.x);
+    this.lapTiming = new LapTimingSystem(
+      this.track.startPosition,
+      this.track.finishLine,
+      this.track.checkpointLine,
+    );
     this.hud = new Hud();
     this.speedometer = new Speedometer();
     this.startOverlay = new StartOverlay(() => this.input.virtualPress('Space'));
@@ -112,6 +116,6 @@ export class RaceScene {
 
   private resetRun(): void {
     this.car.reset(this.track.startPosition, this.track.startHeading);
-    this.lapTiming.resetRun(this.track.startPosition.x);
+    this.lapTiming.resetRun(this.track.startPosition);
   }
 }

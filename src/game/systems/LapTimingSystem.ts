@@ -1,44 +1,62 @@
 import type { Vector3 } from '@babylonjs/core';
-import { TRACK_CURVE_RADIUS, TRACK_STRAIGHT } from '../config/tuning';
-
-const FINISH_X = -TRACK_STRAIGHT / 2;
-const CHECKPOINT_Z = -(TRACK_CURVE_RADIUS - 5);
+import type { Segment2D } from '../entities/Track';
 
 export class LapTimingSystem {
   lapCount = 0;
   lastLapMs: number | null = null;
   bestLapMs: number | null = null;
 
+  private readonly finishLine: Segment2D;
+  private readonly checkpointLine: Segment2D;
   private lapStartMs: number;
-  private prevX: number;
+  private prevFinishSide: number;
+  private prevCheckpointSide: number;
   private hasCheckpoint = false;
 
-  constructor(startX: number) {
-    this.prevX = startX;
+  constructor(
+    startPos: { x: number; z: number },
+    finishLine: Segment2D,
+    checkpointLine: Segment2D,
+  ) {
+    this.finishLine = finishLine;
+    this.checkpointLine = checkpointLine;
     this.lapStartMs = performance.now();
+    this.prevFinishSide = sideOf(startPos.x, startPos.z, finishLine);
+    this.prevCheckpointSide = sideOf(startPos.x, startPos.z, checkpointLine);
   }
 
   get currentLapMs(): number {
     return performance.now() - this.lapStartMs;
   }
 
-  resetRun(startX: number): void {
-    this.prevX = startX;
+  resetRun(startPos: { x: number; z: number }): void {
     this.lapStartMs = performance.now();
-    this.hasCheckpoint = false;
     this.lapCount = 0;
     this.lastLapMs = null;
+    this.hasCheckpoint = false;
+    this.prevFinishSide = sideOf(startPos.x, startPos.z, this.finishLine);
+    this.prevCheckpointSide = sideOf(startPos.x, startPos.z, this.checkpointLine);
   }
 
   update(pos: Vector3): void {
-    if (pos.z < CHECKPOINT_Z) this.hasCheckpoint = true;
+    const chkSide = sideOf(pos.x, pos.z, this.checkpointLine);
+    if (
+      this.prevCheckpointSide !== 0 &&
+      Math.sign(chkSide) !== Math.sign(this.prevCheckpointSide)
+    ) {
+      this.hasCheckpoint = true;
+    }
+    this.prevCheckpointSide = chkSide;
 
-    const crossedFinish =
-      this.prevX < FINISH_X && pos.x >= FINISH_X && pos.z > 0;
-    if (crossedFinish && this.hasCheckpoint) {
+    const finishSide = sideOf(pos.x, pos.z, this.finishLine);
+    if (
+      this.prevFinishSide < 0 &&
+      finishSide >= 0 &&
+      this.hasCheckpoint
+    ) {
       this.completeLap();
     }
-    this.prevX = pos.x;
+    this.prevFinishSide = finishSide;
   }
 
   private completeLap(): void {
@@ -52,4 +70,8 @@ export class LapTimingSystem {
     this.lapStartMs = now;
     this.hasCheckpoint = false;
   }
+}
+
+function sideOf(x: number, z: number, seg: Segment2D): number {
+  return (seg.bx - seg.ax) * (z - seg.az) - (seg.bz - seg.az) * (x - seg.ax);
 }
