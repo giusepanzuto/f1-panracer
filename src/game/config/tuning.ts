@@ -12,3 +12,5 @@ export const WALL_HEIGHT = 0.5;
 
 export const COLLISION_RADIUS = 0.7;
 export const COLLISION_DAMP = 0.92;
+
+export const SPEED_DISPLAY_FACTOR = 20;

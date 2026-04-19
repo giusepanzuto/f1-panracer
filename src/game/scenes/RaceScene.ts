@@ -12,6 +12,7 @@ import { InputSystem } from '../systems/InputSystem';
 import { LapTimingSystem } from '../systems/LapTimingSystem';
 import { COLLISION_DAMP } from '../config/tuning';
 import { Hud } from '../../ui/Hud';
+import { Speedometer } from '../../ui/Speedometer';
 import { StartOverlay } from '../../ui/StartOverlay';
 
 type GameState = 'idle' | 'racing';
@@ -23,6 +24,7 @@ export class RaceScene {
   private readonly input: InputSystem;
   private readonly lapTiming: LapTimingSystem;
   private readonly hud: Hud;
+  private readonly speedometer: Speedometer;
   private readonly startOverlay: StartOverlay;
   private state: GameState = 'idle';
 
@@ -45,6 +47,7 @@ export class RaceScene {
     this.input = new InputSystem();
     this.lapTiming = new LapTimingSystem(this.track.startPosition.x);
     this.hud = new Hud();
+    this.speedometer = new Speedometer();
     this.startOverlay = new StartOverlay();
 
     const camera = new FollowCamera(
@@ -79,6 +82,9 @@ export class RaceScene {
         currentMs: this.state === 'racing' ? this.lapTiming.currentLapMs : 0,
         bestMs: this.lapTiming.bestLapMs,
       });
+      this.speedometer.update(
+        this.state === 'racing' ? this.car.speedKmh : 0,
+      );
     });
   }
 
@@ -88,6 +94,7 @@ export class RaceScene {
 
   dispose(): void {
     this.startOverlay.dispose();
+    this.speedometer.dispose();
     this.hud.dispose();
     this.input.dispose();
     this.scene.dispose();
