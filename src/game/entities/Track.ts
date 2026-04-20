@@ -3,6 +3,7 @@ import {
   MeshBuilder,
   Scene,
   StandardMaterial,
+  Texture,
   Vector3,
 } from '@babylonjs/core';
 import type { Mesh } from '@babylonjs/core';
@@ -42,8 +43,11 @@ export class Track {
     const innerPath = offsetPath(center, -halfWidth);
     const outerPath = offsetPath(center, halfWidth);
 
+    const grassTex = new Texture('/textures/grass.jpg', scene);
+    grassTex.uScale = 40;
+    grassTex.vScale = 40;
     const grassMat = new StandardMaterial('grass-mat', scene);
-    grassMat.diffuseColor = new Color3(0.36, 0.7, 0.26);
+    grassMat.diffuseTexture = grassTex;
     grassMat.specularColor = Color3.Black();
     const grass = MeshBuilder.CreateGround(
       'grass',
@@ -54,8 +58,11 @@ export class Track {
     grass.material = grassMat;
     this.meshes.push(grass);
 
+    const asphaltTex = new Texture('/textures/asphalt.jpg', scene);
+    asphaltTex.uScale = 20;
+    asphaltTex.vScale = 2;
     const asphaltMat = new StandardMaterial('asphalt-mat', scene);
-    asphaltMat.diffuseColor = new Color3(0.14, 0.15, 0.18);
+    asphaltMat.diffuseTexture = asphaltTex;
     asphaltMat.specularColor = Color3.Black();
 
     const asphalt = MeshBuilder.CreateRibbon(

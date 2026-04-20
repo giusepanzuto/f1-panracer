@@ -3,6 +3,7 @@ import {
   MeshBuilder,
   Scene,
   StandardMaterial,
+  Texture,
   Vector3,
 } from '@babylonjs/core';
 import type { Mesh, StandardMaterial as StdMat } from '@babylonjs/core';
@@ -36,9 +37,24 @@ export class Scenery {
     const hillRingRadius =
       Math.max(maxX - minX, maxZ - minZ) * 0.65 + SCENERY_MARGIN;
 
-    const trunkMat = makeMat(scene, 'trunk-mat', new Color3(0.45, 0.27, 0.14));
-    const leavesMat = makeMat(scene, 'leaves-mat', new Color3(0.2, 0.52, 0.18));
-    const hillMat = makeMat(scene, 'hill-mat', new Color3(0.32, 0.6, 0.24));
+    const trunkTex = new Texture('/textures/bark.jpg', scene);
+    trunkTex.vScale = 2;
+    const trunkMat = new StandardMaterial('trunk-mat', scene);
+    trunkMat.diffuseTexture = trunkTex;
+    trunkMat.specularColor = Color3.Black();
+
+    const leavesTex = new Texture('/textures/leaves.jpg', scene);
+    const leavesMat = new StandardMaterial('leaves-mat', scene);
+    leavesMat.diffuseTexture = leavesTex;
+    leavesMat.specularColor = Color3.Black();
+
+    const hillTex = new Texture('/textures/rock.jpg', scene);
+    hillTex.uScale = 3;
+    hillTex.vScale = 3;
+    const hillMat = new StandardMaterial('hill-mat', scene);
+    hillMat.diffuseTexture = hillTex;
+    hillMat.specularColor = Color3.Black();
+
     const cloudMat = makeMat(scene, 'cloud-mat', new Color3(0.96, 0.98, 1));
 
     let placed = 0;

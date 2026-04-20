@@ -14,9 +14,6 @@ body {
   display: block;
   touch-action: none;
   outline: none;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
 }
 
 .hud {
