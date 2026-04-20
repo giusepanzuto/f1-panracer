@@ -7,6 +7,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import { Car } from '../entities/Car';
+import { Scenery } from '../entities/Scenery';
 import { Track } from '../entities/Track';
 import { InputSystem } from '../systems/InputSystem';
 import { LapTimingSystem } from '../systems/LapTimingSystem';
@@ -30,13 +31,14 @@ export class RaceScene {
   private readonly touchControls: TouchControls;
   private readonly designer: TrackDesigner;
   private track: Track;
+  private scenery: Scenery;
   private lapTiming: LapTimingSystem;
   private minimap: Minimap;
   private state: GameState = 'idle';
 
   constructor(engine: Engine) {
     this.scene = new Scene(engine);
-    this.scene.clearColor.set(0.52, 0.75, 0.92, 1);
+    this.scene.clearColor.set(0.45, 0.74, 0.96, 1);
 
     const light = new HemisphericLight(
       'light',
@@ -48,6 +50,7 @@ export class RaceScene {
     light.intensity = 1;
 
     this.track = new Track(this.scene);
+    this.scenery = new Scenery(this.scene, this.track.centerline);
     this.car = new Car(this.scene);
     this.car.reset(this.track.startPosition, this.track.startHeading);
     this.input = new InputSystem();
@@ -141,9 +144,11 @@ export class RaceScene {
 
   private rebuildTrack(centerline: Vector3[]): void {
     this.track.dispose();
+    this.scenery.dispose();
     this.minimap.dispose();
 
     this.track = new Track(this.scene, centerline);
+    this.scenery = new Scenery(this.scene, this.track.centerline);
     this.lapTiming = new LapTimingSystem(
       this.track.startPosition,
       this.track.finishLine,

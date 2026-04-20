@@ -43,7 +43,7 @@ export class Track {
     const outerPath = offsetPath(center, halfWidth);
 
     const grassMat = new StandardMaterial('grass-mat', scene);
-    grassMat.diffuseColor = new Color3(0.33, 0.58, 0.28);
+    grassMat.diffuseColor = new Color3(0.36, 0.7, 0.26);
     grassMat.specularColor = Color3.Black();
     const grass = MeshBuilder.CreateGround(
       'grass',
