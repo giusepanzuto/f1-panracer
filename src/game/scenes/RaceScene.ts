@@ -7,6 +7,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 import { Car } from '../entities/Car';
+import { Grandstand } from '../entities/Grandstand';
 import { Scenery } from '../entities/Scenery';
 import { Track } from '../entities/Track';
 import { InputSystem } from '../systems/InputSystem';
@@ -32,6 +33,7 @@ export class RaceScene {
   private readonly designer: TrackDesigner;
   private track: Track;
   private scenery: Scenery;
+  private grandstand: Grandstand;
   private lapTiming: LapTimingSystem;
   private minimap: Minimap;
   private state: GameState = 'idle';
@@ -51,6 +53,12 @@ export class RaceScene {
 
     this.track = new Track(this.scene);
     this.scenery = new Scenery(this.scene, this.track.centerline);
+    this.grandstand = new Grandstand(
+      this.scene,
+      this.track.startPosition,
+      this.track.startHeading,
+      -1,
+    );
     this.car = new Car(this.scene);
     this.car.reset(this.track.startPosition, this.track.startHeading);
     this.input = new InputSystem();
@@ -145,10 +153,17 @@ export class RaceScene {
   private rebuildTrack(centerline: Vector3[]): void {
     this.track.dispose();
     this.scenery.dispose();
+    this.grandstand.dispose();
     this.minimap.dispose();
 
     this.track = new Track(this.scene, centerline);
     this.scenery = new Scenery(this.scene, this.track.centerline);
+    this.grandstand = new Grandstand(
+      this.scene,
+      this.track.startPosition,
+      this.track.startHeading,
+      -1,
+    );
     this.lapTiming = new LapTimingSystem(
       this.track.startPosition,
       this.track.finishLine,
