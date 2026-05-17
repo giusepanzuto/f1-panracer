@@ -35,6 +35,11 @@ export class Car {
     const helmetMat = makeFlat(scene, 'helmet-mat', new Color3(0.95, 0.85, 0.15));
     const wheelMat = makeFlat(scene, 'wheel-mat', new Color3(0.08, 0.08, 0.08));
     const rimMat = makeFlat(scene, 'rim-mat', new Color3(0.7, 0.72, 0.78));
+    const suspensionMat = makeFlat(
+      scene,
+      'suspension-mat',
+      new Color3(0.1, 0.1, 0.12),
+    );
 
     const sponsorTex = makeSponsorTexture(scene);
     const sponsorMat = new StandardMaterial('sponsor-mat', scene);
@@ -133,6 +138,35 @@ export class Car {
     const haloRight = haloLeft.clone('halo-right');
     haloRight.position.set(0.2, 0.44, -0.05);
 
+    const haloPost = MeshBuilder.CreateBox(
+      'halo-post',
+      { width: 0.05, height: 0.32, depth: 0.05 },
+      scene,
+    );
+    haloPost.position.set(0, 0.30, 0.42);
+    haloPost.material = chromeMat;
+    haloPost.parent = this.root;
+
+    for (const sx of [-1, 1]) {
+      const mirrorStalk = MeshBuilder.CreateBox(
+        'mirror-stalk',
+        { width: 0.08, height: 0.025, depth: 0.025 },
+        scene,
+      );
+      mirrorStalk.position.set(sx * 0.26, 0.2, 0.05);
+      mirrorStalk.material = blackMat;
+      mirrorStalk.parent = this.root;
+
+      const mirror = MeshBuilder.CreateBox(
+        'mirror',
+        { width: 0.07, height: 0.06, depth: 0.11 },
+        scene,
+      );
+      mirror.position.set(sx * 0.33, 0.2, 0.05);
+      mirror.material = blackMat;
+      mirror.parent = this.root;
+    }
+
     const airbox = MeshBuilder.CreateBox(
       'airbox',
       { width: 0.3, height: 0.32, depth: 0.5 },
@@ -151,6 +185,15 @@ export class Car {
     airboxIntake.material = blackMat;
     airboxIntake.parent = this.root;
 
+    const tCam = MeshBuilder.CreateBox(
+      't-cam',
+      { width: 0.05, height: 0.12, depth: 0.05 },
+      scene,
+    );
+    tCam.position.set(0, 0.54, -0.3);
+    tCam.material = blackMat;
+    tCam.parent = this.root;
+
     const engineCover = MeshBuilder.CreateBox(
       'engine-cover',
       { width: 0.45, height: 0.12, depth: 0.5 },
@@ -159,6 +202,15 @@ export class Car {
     engineCover.position.set(0, 0.22, -0.78);
     engineCover.material = bodyMat;
     engineCover.parent = this.root;
+
+    const sharkFin = MeshBuilder.CreateBox(
+      'shark-fin',
+      { width: 0.03, height: 0.22, depth: 0.55 },
+      scene,
+    );
+    sharkFin.position.set(0, 0.4, -0.78);
+    sharkFin.material = bodyMat;
+    sharkFin.parent = this.root;
 
     const frontWing = MeshBuilder.CreateBox(
       'front-wing',
@@ -276,6 +328,10 @@ export class Car {
       this.buildWheel(scene, offset, 0.28, 0.55, wheelMat, rimMat, 'rear');
     }
 
+    for (const offset of [...frontWheelOffsets, ...rearWheelOffsets]) {
+      this.buildSuspension(scene, offset, suspensionMat);
+    }
+
     this.syncTransform();
   }
 
@@ -306,6 +362,39 @@ export class Car {
     this.position.z += forwardZ * this.speed * dt;
 
     this.syncTransform();
+  }
+
+  private buildSuspension(
+    scene: Scene,
+    wheelOffset: Vector3,
+    mat: StdMat,
+  ): void {
+    const side = Math.sign(wheelOffset.x);
+    const chassisX = side * 0.4;
+    const wheelX = wheelOffset.x;
+    const dx = wheelX - chassisX;
+
+    // Wishbone superiore + inferiore, ciascuno a "A" con 2 bracci che
+    // convergono sul mozzo (uno dal mount chassis anteriore, uno posteriore)
+    for (const dy of [0.1, -0.06]) {
+      for (const dzMount of [0.18, -0.18]) {
+        const dz = -dzMount;
+        const armLen = Math.hypot(dx, dz);
+        const arm = MeshBuilder.CreateBox(
+          'suspension-arm',
+          { width: armLen * 0.95, height: 0.025, depth: 0.04 },
+          scene,
+        );
+        arm.position.set(
+          (chassisX + wheelX) / 2,
+          wheelOffset.y + dy,
+          wheelOffset.z + dzMount / 2,
+        );
+        arm.rotation.y = Math.atan2(-dz, dx);
+        arm.material = mat;
+        arm.parent = this.root;
+      }
+    }
   }
 
   private buildWheel(
