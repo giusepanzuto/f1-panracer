@@ -6,7 +6,6 @@ export const FRICTION_UPS2 = 5;
 export const MAX_TURN_RADS = 2.4;
 
 export const TRACK_WIDTH = 10;
-export const WALL_HEIGHT = 0.5;
 
 export const COLLISION_RADIUS = 0.7;
 export const COLLISION_DAMP = 0.92;

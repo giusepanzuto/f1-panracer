@@ -1,19 +1,17 @@
 import {
   Color3,
+  Mesh,
   MeshBuilder,
   Scene,
   StandardMaterial,
   Texture,
   Vector3,
 } from '@babylonjs/core';
-import type { Mesh } from '@babylonjs/core';
-import {
-  COLLISION_RADIUS,
-  TRACK_WIDTH,
-  WALL_HEIGHT,
-} from '../config/tuning';
+import { COLLISION_RADIUS, TRACK_WIDTH } from '../config/tuning';
 
-const WALL_RADIUS = WALL_HEIGHT / 2;
+const CURB_STRIPE_LEN = 1.5;
+const CURB_WIDTH = 0.7;
+const CURB_HEIGHT = 0.14;
 
 export type Segment2D = {
   ax: number;
@@ -77,30 +75,38 @@ export class Track {
     asphalt.material = asphaltMat;
     this.meshes.push(asphalt);
 
-    const wallMat = new StandardMaterial('wall-mat', scene);
-    wallMat.diffuseColor = new Color3(0.95, 0.75, 0.2);
-    wallMat.specularColor = Color3.Black();
+    const curbRedMat = new StandardMaterial('curb-red-mat', scene);
+    curbRedMat.diffuseColor = new Color3(0.86, 0.13, 0.13);
+    curbRedMat.specularColor = Color3.Black();
 
-    const liftPath = (path: Vector3[]): Vector3[] => [
-      ...path.map((p) => new Vector3(p.x, WALL_RADIUS, p.z)),
-      new Vector3(path[0].x, WALL_RADIUS, path[0].z),
-    ];
+    const curbWhiteMat = new StandardMaterial('curb-white-mat', scene);
+    curbWhiteMat.diffuseColor = new Color3(0.95, 0.95, 0.95);
+    curbWhiteMat.specularColor = Color3.Black();
 
-    const innerWall = MeshBuilder.CreateTube(
-      'inner-wall',
-      { path: liftPath(innerPath), radius: WALL_RADIUS, cap: 0 },
-      scene,
+    const inner = buildCurbStripes(scene, innerPath);
+    const outer = buildCurbStripes(scene, outerPath);
+    const allReds = [...inner.reds, ...outer.reds];
+    const allWhites = [...inner.whites, ...outer.whites];
+
+    const mergedRed = Mesh.MergeMeshes(allReds, true, true, undefined, false, false);
+    if (mergedRed) {
+      mergedRed.name = 'curb-red';
+      mergedRed.material = curbRedMat;
+      this.meshes.push(mergedRed);
+    }
+    const mergedWhite = Mesh.MergeMeshes(
+      allWhites,
+      true,
+      true,
+      undefined,
+      false,
+      false,
     );
-    innerWall.material = wallMat;
-    this.meshes.push(innerWall);
-
-    const outerWall = MeshBuilder.CreateTube(
-      'outer-wall',
-      { path: liftPath(outerPath), radius: WALL_RADIUS, cap: 0 },
-      scene,
-    );
-    outerWall.material = wallMat;
-    this.meshes.push(outerWall);
+    if (mergedWhite) {
+      mergedWhite.name = 'curb-white';
+      mergedWhite.material = curbWhiteMat;
+      this.meshes.push(mergedWhite);
+    }
 
     const startTangent = tangentAt(center, 0);
     this.startHeading = Math.atan2(startTangent.x, startTangent.z);
@@ -231,6 +237,45 @@ function tangentAt(path: Vector3[], index: number): Vector3 {
   const tz = next.z - prev.z;
   const len = Math.hypot(tx, tz) || 1;
   return new Vector3(tx / len, 0, tz / len);
+}
+
+function buildCurbStripes(
+  scene: Scene,
+  path: Vector3[],
+): { reds: Mesh[]; whites: Mesh[] } {
+  const reds: Mesh[] = [];
+  const whites: Mesh[] = [];
+  const n = path.length;
+  let stripeIndex = 0;
+
+  for (let i = 0; i < n; i++) {
+    const a = path[i];
+    const b = path[(i + 1) % n];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const segLen = Math.hypot(dx, dz);
+    if (segLen < 0.01) continue;
+
+    const sub = Math.max(1, Math.round(segLen / CURB_STRIPE_LEN));
+    const subLen = segLen / sub;
+    const heading = Math.atan2(dx, dz);
+
+    for (let j = 0; j < sub; j++) {
+      const midT = (j + 0.5) / sub;
+      const cx = a.x + dx * midT;
+      const cz = a.z + dz * midT;
+      const stripe = MeshBuilder.CreateBox(
+        `curb-stripe-${stripeIndex}`,
+        { width: CURB_WIDTH, height: CURB_HEIGHT, depth: subLen },
+        scene,
+      );
+      stripe.position.set(cx, CURB_HEIGHT / 2, cz);
+      stripe.rotation.y = heading;
+      (stripeIndex % 2 === 0 ? reds : whites).push(stripe);
+      stripeIndex++;
+    }
+  }
+  return { reds, whites };
 }
 
 function offsetPath(center: Vector3[], offset: number): Vector3[] {
