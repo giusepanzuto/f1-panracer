@@ -6,6 +6,7 @@ import {
   Scene,
   Vector3,
 } from '@babylonjs/core';
+import { Billboards } from '../entities/Billboards';
 import { Car } from '../entities/Car';
 import { Grandstand } from '../entities/Grandstand';
 import { Scenery } from '../entities/Scenery';
@@ -34,6 +35,7 @@ export class RaceScene {
   private track: Track;
   private scenery: Scenery;
   private grandstand: Grandstand;
+  private billboards: Billboards;
   private lapTiming: LapTimingSystem;
   private minimap: Minimap;
   private state: GameState = 'idle';
@@ -59,6 +61,7 @@ export class RaceScene {
       this.track.startHeading,
       -1,
     );
+    this.billboards = new Billboards(this.scene, this.track.centerline);
     this.car = new Car(this.scene);
     this.car.reset(this.track.startPosition, this.track.startHeading);
     this.input = new InputSystem();
@@ -154,6 +157,7 @@ export class RaceScene {
     this.track.dispose();
     this.scenery.dispose();
     this.grandstand.dispose();
+    this.billboards.dispose();
     this.minimap.dispose();
 
     this.track = new Track(this.scene, centerline);
@@ -164,6 +168,7 @@ export class RaceScene {
       this.track.startHeading,
       -1,
     );
+    this.billboards = new Billboards(this.scene, this.track.centerline);
     this.lapTiming = new LapTimingSystem(
       this.track.startPosition,
       this.track.finishLine,
